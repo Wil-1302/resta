@@ -1,97 +1,94 @@
 /* ================================================================
-   Calculadora de Resta Binaria
-   Lógica: resta con préstamo (borrow), igual que en decimal.
+   Calculadora Binaria
+   - Conversor bidireccional: Bin ↔ Dec
+   - Resta binaria con préstamo paso a paso
    ================================================================ */
 
-// ── Validación ──────────────────────────────────────────────────
+// ── Validación y conversión ──────────────────────────────────────
 
-/**
- * Devuelve true si la cadena solo contiene '0' y '1' y no está vacía.
- */
 function isValidBinary(str) {
   return str.length > 0 && /^[01]+$/.test(str);
 }
 
-// ── Lógica de resta ─────────────────────────────────────────────
+function isValidDecimalStr(str) {
+  const t = str.trim();
+  return /^-?\d+$/.test(t) && t !== '-' && t !== '';
+}
 
 /**
- * Resta dos cadenas binarias: rawA - rawB.
- *
- * Algoritmo con préstamo (borrow):
- *   Se procesa de LSB a MSB. Cuando el dígito superior es menor
- *   que el inferior más el préstamo acumulado, se "pide prestado"
- *   a la columna de la izquierda: el dígito sube en 2 (base binaria)
- *   y la columna izquierda queda con 1 menos.
- *
- * Si A < B: el resultado es negativo. Se invierte los operandos
- *   para calcular |B - A| y se marca isNegative = true.
- *
- * Retorna:
- *   { top, bottom, resBits, borrowUsed, needsBorrow, resultStr,
- *     isNegative, decA, decB, decResult }
+ * Convierte cadena binaria a decimal. Retorna null si inválida.
  */
+function binaryToDecimal(binStr) {
+  if (!isValidBinary(binStr)) return null;
+  return parseInt(binStr, 2);
+}
+
+/**
+ * Convierte cadena decimal a binario.
+ * Soporta negativos. Retorna { binary, negative, absDecimal } o null.
+ */
+function decimalToBinary(numStr) {
+  const t = numStr.trim();
+  if (!t || t === '-') return null;
+  const isNeg  = t[0] === '-';
+  const absStr = isNeg ? t.slice(1) : t;
+  if (!/^\d+$/.test(absStr)) return null;
+  const n = parseInt(absStr, 10);
+  if (isNaN(n)) return null;
+  return { binary: n.toString(2), negative: isNeg, absDecimal: n };
+}
+
+// ── Resta binaria ────────────────────────────────────────────────
+
 function subtractBinary(rawA, rawB) {
   const decA = parseInt(rawA, 2);
   const decB = parseInt(rawB, 2);
   const isNegative = decA < decB;
 
-  // Para el procedimiento siempre calculamos mayor - menor
   const topRaw = isNegative ? rawB : rawA;
   const botRaw = isNegative ? rawA : rawB;
 
-  // Igualar longitudes con ceros a la izquierda
-  const len = Math.max(topRaw.length, botRaw.length);
-  const top = topRaw.padStart(len, '0');
+  const len    = Math.max(topRaw.length, botRaw.length);
+  const top    = topRaw.padStart(len, '0');
   const bottom = botRaw.padStart(len, '0');
 
   const topBits = top.split('').map(Number);
   const botBits = bottom.split('').map(Number);
 
   const resBits    = new Array(len);
-  // borrowUsed[i] = cuánto cedió la columna i a su vecina derecha
   const borrowUsed  = new Array(len).fill(0);
-  // needsBorrow[i] = si la columna i tuvo que pedir a su vecina izquierda
   const needsBorrow = new Array(len).fill(0);
 
-  let runningBorrow = 0; // préstamo acumulado que la columna actual hereda de la derecha
+  let runningBorrow = 0;
 
-  // Procesar de derecha (LSB) a izquierda (MSB)
   for (let i = len - 1; i >= 0; i--) {
-    borrowUsed[i] = runningBorrow; // cuánto cede esta columna (lo que la derecha le pidió)
-
+    borrowUsed[i] = runningBorrow;
     const raw = topBits[i] - botBits[i] - runningBorrow;
 
     if (raw < 0) {
-      resBits[i]    = raw + 2; // pide prestado: suma 2 (base 2)
+      resBits[i]     = raw + 2;
       needsBorrow[i] = 1;
-      runningBorrow  = 1;      // la columna izquierda deberá ceder 1
+      runningBorrow  = 1;
     } else {
-      resBits[i]    = raw;
+      resBits[i]     = raw;
       needsBorrow[i] = 0;
       runningBorrow  = 0;
     }
   }
 
-  // Resultado como cadena (eliminar ceros a la izquierda, mínimo "0")
   const resultStr = resBits.join('').replace(/^0+/, '') || '0';
   const decResult = Math.abs(decA - decB);
 
   return {
-    top, bottom,
-    topBits, botBits,
+    top, bottom, topBits, botBits,
     resBits, resultStr,
     borrowUsed, needsBorrow,
-    isNegative,
-    decA, decB, decResult,
+    isNegative, decA, decB, decResult,
   };
 }
 
-// ── Renderizado ─────────────────────────────────────────────────
+// ── Renderizado tabla y pasos ────────────────────────────────────
 
-/**
- * Construye la tabla visual de la resta con filas:
- *   Préstamo cedido | top | bottom | divider | resultado
- */
 function renderTable(data) {
   const { top, bottom, topBits, botBits, resBits, borrowUsed, isNegative } = data;
   const len = top.length;
@@ -105,11 +102,9 @@ function renderTable(data) {
     return `<td><div class="bits-row ${rowClass}">${cells}</div></td>`;
   };
 
-  const labelCell = (text) =>
-    `<td class="td-label">${text}</td>`;
-
-  const topLabel    = isNegative ? 'B &nbsp;(mayor)'  : 'A &nbsp;(minuendo)';
-  const bottomLabel = isNegative ? 'A &nbsp;(menor)' : 'B &nbsp;(sustraendo)';
+  const labelCell    = text => `<td class="td-label">${text}</td>`;
+  const topLabel     = isNegative ? 'B &nbsp;(mayor)'  : 'A &nbsp;(minuendo)';
+  const bottomLabel  = isNegative ? 'A &nbsp;(menor)'  : 'B &nbsp;(sustraendo)';
 
   return `
     <table class="sub-table">
@@ -138,10 +133,6 @@ function renderTable(data) {
     </table>`;
 }
 
-/**
- * Genera la lista de pasos textuales, de LSB a MSB
- * (el orden natural del algoritmo con préstamo).
- */
 function renderSteps(data) {
   const { topBits, botBits, resBits, borrowUsed, needsBorrow } = data;
   const len = topBits.length;
@@ -149,29 +140,25 @@ function renderSteps(data) {
   let html = '';
   let num  = 1;
 
-  // De derecha (LSB) a izquierda (MSB)
   for (let i = len - 1; i >= 0; i--) {
-    const pos      = len - 1 - i;      // posición desde LSB (0 = bit menos significativo)
-    const lentOut  = borrowUsed[i];    // cuánto cedió esta columna a la derecha
-    const borrows  = needsBorrow[i];   // ¿esta columna pidió a la izquierda?
-    const t        = topBits[i];
-    const b        = botBits[i];
-    const r        = resBits[i];
+    const pos     = len - 1 - i;
+    const lentOut = borrowUsed[i];
+    const borrows = needsBorrow[i];
+    const t = topBits[i];
+    const b = botBits[i];
+    const r = resBits[i];
 
-    // Construir expresión de la columna
     let expr = `${t} &minus; ${b}`;
     if (lentOut) expr += ` &minus; 1<sub style="font-size:.75em">(prest.)</sub>`;
 
     let desc;
     if (borrows) {
-      // Necesitó pedir préstamo
-      const raw = t - b - lentOut; // será negativo
+      const raw = t - b - lentOut;
       desc =
         `<strong>Bit posición ${pos}:</strong> <code>${t}&minus;${b}${lentOut ? '&minus;1' : ''} = ${raw}</code>
          &rarr; negativo &rarr; <span class="tag-borrow">pide préstamo</span>
          a la izquierda: <code>1${t}&minus;${b}${lentOut ? '&minus;1' : ''} = <strong>${r}</strong></code>`;
     } else if (lentOut && t - b === lentOut) {
-      // Exactamente igualado por el préstamo que ya cedió
       desc =
         `<strong>Bit posición ${pos}:</strong> <code>${t}&minus;${b}&minus;1 = <strong>${r}</strong></code>
          (el préstamo cedido se absorbe)`;
@@ -191,7 +178,7 @@ function renderSteps(data) {
   return html;
 }
 
-// ── UI helpers ──────────────────────────────────────────────────
+// ── UI helpers (calculadora) ─────────────────────────────────────
 
 function showError(msg) {
   const box = document.getElementById('errorBox');
@@ -211,7 +198,110 @@ function setFieldState(inputEl, hintEl, state, msg) {
   hintEl.className = `field-hint ${state === 'valid' ? 'ok' : state === 'invalid' ? 'err' : ''}`;
 }
 
-// ── Acción principal ─────────────────────────────────────────────
+function updateDecimalHint(inputEl, decimalEl) {
+  const val = inputEl.value.trim();
+  if (!val) {
+    decimalEl.textContent = 'Decimal: —';
+    decimalEl.className = 'decimal-hint';
+    return;
+  }
+  const dec = binaryToDecimal(val);
+  if (dec === null) {
+    decimalEl.textContent = 'Decimal: Inválido';
+    decimalEl.className = 'decimal-hint err';
+  } else {
+    decimalEl.textContent = `Decimal: ${dec}`;
+    decimalEl.className = 'decimal-hint ok';
+  }
+}
+
+// ── Conversor UI ─────────────────────────────────────────────────
+
+/**
+ * Construye el HTML del resultado de conversión.
+ * leftStr/rightStr: cadenas numéricas (sin signo)
+ * leftBase/rightBase: número base (2 o 10)
+ * isNeg: si el número es negativo
+ */
+function buildConvResultHTML(leftStr, leftBase, rightStr, rightBase, isNeg) {
+  const sign = isNeg ? '−' : '';
+  const negClass = isNeg ? ' negative' : '';
+  return `
+    <div class="conv-result-display${negClass}">
+      <span class="conv-num">${sign}${leftStr}<sub>${leftBase}</sub></span>
+      <span class="conv-eq">=</span>
+      <span class="conv-num">${sign}${rightStr}<sub>${rightBase}</sub></span>
+    </div>`;
+}
+
+function updateBin2Dec() {
+  const input  = document.getElementById('binConvInput');
+  const hint   = document.getElementById('binConvHint');
+  const result = document.getElementById('bin2decResult');
+  const val    = input.value.trim();
+
+  if (!val) {
+    input.className = 'conv-input';
+    hint.textContent = '';
+    hint.className = 'conv-hint';
+    result.innerHTML = '<span class="conv-placeholder">Escribe un número binario para convertir</span>';
+    return;
+  }
+
+  if (!isValidBinary(val)) {
+    input.className = 'conv-input is-invalid';
+    hint.textContent = 'Solo se permiten dígitos 0 y 1';
+    hint.className = 'conv-hint err';
+    result.innerHTML = '<span class="conv-placeholder">Entrada inválida</span>';
+    return;
+  }
+
+  const dec = binaryToDecimal(val);
+  input.className = 'conv-input is-valid';
+  hint.textContent = `${val.length} bit${val.length !== 1 ? 's' : ''}`;
+  hint.className = 'conv-hint ok';
+  result.innerHTML = buildConvResultHTML(val, 2, dec, 10, false);
+}
+
+function updateDec2Bin() {
+  const input  = document.getElementById('decConvInput');
+  const hint   = document.getElementById('decConvHint');
+  const result = document.getElementById('dec2binResult');
+  const val    = input.value.trim();
+
+  if (!val || val === '-') {
+    input.className = 'conv-input';
+    hint.textContent = '';
+    hint.className = 'conv-hint';
+    result.innerHTML = '<span class="conv-placeholder">Escribe un número decimal para convertir</span>';
+    return;
+  }
+
+  if (!isValidDecimalStr(val)) {
+    input.className = 'conv-input is-invalid';
+    hint.textContent = 'Solo se permiten números enteros';
+    hint.className = 'conv-hint err';
+    result.innerHTML = '<span class="conv-placeholder">Entrada inválida</span>';
+    return;
+  }
+
+  const res = decimalToBinary(val);
+  if (!res) {
+    input.className = 'conv-input is-invalid';
+    hint.textContent = 'Número inválido';
+    hint.className = 'conv-hint err';
+    result.innerHTML = '<span class="conv-placeholder">Entrada inválida</span>';
+    return;
+  }
+
+  const absDecStr = String(res.absDecimal);
+  input.className = 'conv-input is-valid';
+  hint.textContent = `${res.binary.length} bit${res.binary.length !== 1 ? 's' : ''}`;
+  hint.className = 'conv-hint ok';
+  result.innerHTML = buildConvResultHTML(absDecStr, 10, res.binary, 2, res.negative);
+}
+
+// ── Calculadora ──────────────────────────────────────────────────
 
 function calculate() {
   const inputA = document.getElementById('numA');
@@ -224,7 +314,6 @@ function calculate() {
 
   let hasError = false;
 
-  // Validar A
   if (!valA) {
     setFieldState(inputA, hintA, 'invalid', 'Este campo es obligatorio');
     hasError = true;
@@ -235,7 +324,6 @@ function calculate() {
     setFieldState(inputA, hintA, 'valid', `= ${parseInt(valA, 2)} en decimal`);
   }
 
-  // Validar B
   if (!valB) {
     setFieldState(inputB, hintB, 'invalid', 'Este campo es obligatorio');
     hasError = true;
@@ -255,18 +343,20 @@ function calculate() {
 
   const data = subtractBinary(valA, valB);
 
-  // ── Mostrar resultado ──
-  const sign     = data.isNegative ? '−' : '';
-  const badgeTxt = data.isNegative ? 'Negativo' : data.decResult === 0 ? 'Cero' : 'Positivo';
-  const decLine  = `${data.isNegative ? '−' : ''}${data.decResult} en decimal`;
+  const sign       = data.isNegative ? '−' : '';
+  const badgeTxt   = data.isNegative ? 'Negativo' : data.decResult === 0 ? 'Cero' : 'Positivo';
+  const decLine    = `Binario: ${sign}${data.resultStr}`;
+  const decValLine = `Decimal: ${data.isNegative ? '−' : ''}${data.decResult}`;
 
-  document.getElementById('resultSign').textContent    = sign;
-  document.getElementById('resultBin').textContent     = data.resultStr;
-  document.getElementById('resultBadge').textContent   = badgeTxt;
-  document.getElementById('resultDecimal').textContent = decLine;
-  document.getElementById('resultCard').classList.remove('hidden');
+  const resultCard = document.getElementById('resultCard');
+  document.getElementById('resultSign').textContent       = sign;
+  document.getElementById('resultBin').textContent        = data.resultStr;
+  document.getElementById('resultBadge').textContent      = badgeTxt;
+  document.getElementById('resultDecimal').textContent    = decLine;
+  document.getElementById('resultDecimalVal').textContent = decValLine;
+  resultCard.classList.remove('hidden');
+  resultCard.classList.toggle('negative', data.isNegative);
 
-  // ── Mostrar procedimiento ──
   const negNote = document.getElementById('negativeNote');
   negNote.classList.toggle('hidden', !data.isNegative);
 
@@ -274,34 +364,94 @@ function calculate() {
   document.getElementById('stepList').innerHTML  = renderSteps(data);
   document.getElementById('stepsCard').classList.remove('hidden');
 
-  // Desplazar suavemente al resultado
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Eventos ──────────────────────────────────────────────────────
+// ── Tab switching ────────────────────────────────────────────────
+
+function switchMainTab(targetPanelId) {
+  document.querySelectorAll('.main-tab').forEach(tab => {
+    const active = tab.dataset.panel === targetPanelId;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-selected', active);
+  });
+
+  document.querySelectorAll('.mode-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.id === targetPanelId);
+  });
+}
+
+function switchConvTab(targetMode) {
+  document.querySelectorAll('.conv-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.conv === targetMode);
+  });
+
+  document.querySelectorAll('.conv-mode').forEach(mode => {
+    const id = targetMode === 'bin2dec' ? 'bin2decMode' : 'dec2binMode';
+    mode.classList.toggle('active', mode.id === id);
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  const inputA = document.getElementById('numA');
-  const inputB = document.getElementById('numB');
+  // ── Main tabs
+  document.querySelectorAll('.main-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchMainTab(tab.dataset.panel));
+  });
 
-  // Calcular al hacer clic
+  // ── Conv sub-tabs
+  document.querySelectorAll('.conv-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchConvTab(tab.dataset.conv));
+  });
+
+  // ── Conversor: Bin → Dec
+  const binConvInput = document.getElementById('binConvInput');
+  binConvInput.addEventListener('input', e => {
+    const pos     = e.target.selectionStart;
+    const cleaned = e.target.value.replace(/[^01]/g, '');
+    if (cleaned !== e.target.value) {
+      e.target.value = cleaned;
+      e.target.setSelectionRange(pos - 1, pos - 1);
+    }
+    updateBin2Dec();
+  });
+
+  // ── Conversor: Dec → Bin
+  const decConvInput = document.getElementById('decConvInput');
+  decConvInput.addEventListener('input', e => {
+    // Permitir: dígitos y un '-' al inicio
+    const raw     = e.target.value;
+    const pos     = e.target.selectionStart;
+    const cleaned = raw.replace(/(?!^)-/g, '').replace(/[^0-9-]/g, '');
+    if (cleaned !== raw) {
+      e.target.value = cleaned;
+      e.target.setSelectionRange(Math.max(0, pos - 1), Math.max(0, pos - 1));
+    }
+    updateDec2Bin();
+  });
+
+  // ── Calculadora inputs
+  const inputA   = document.getElementById('numA');
+  const inputB   = document.getElementById('numB');
+  const decimalA = document.getElementById('decimalA');
+  const decimalB = document.getElementById('decimalB');
+
   document.getElementById('calcBtn').addEventListener('click', calculate);
 
-  // Calcular al presionar Enter en cualquier campo
-  [inputA, inputB].forEach(input => {
+  [[inputA, decimalA], [inputB, decimalB]].forEach(([input, decimalEl]) => {
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') calculate();
     });
 
-    // Filtrar en tiempo real: solo 0 y 1
     input.addEventListener('input', e => {
       const pos     = e.target.selectionStart;
       const cleaned = e.target.value.replace(/[^01]/g, '');
       if (cleaned !== e.target.value) {
         e.target.value = cleaned;
-        // Restaurar posición del cursor tras la limpieza
         e.target.setSelectionRange(pos - 1, pos - 1);
       }
+      updateDecimalHint(e.target, decimalEl);
     });
   });
 });

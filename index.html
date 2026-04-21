@@ -3,134 +3,237 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resta Binaria</title>
+  <title>Calculadora Binaria</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <div class="container">
+  <!-- Header flotante sobre el gradiente -->
+  <header>
+    <div class="header-icon">01</div>
+    <h1>Calculadora<br>Binaria</h1>
+    <p class="subtitle">Conversión y resta binaria paso a paso</p>
+  </header>
 
-    <header>
-      <div class="header-icon">01</div>
-      <h1>Calculadora de<br>Resta Binaria</h1>
-      <p class="subtitle">Aprende la resta binaria con préstamo paso a paso</p>
-    </header>
+  <!-- Ventana macOS -->
+  <div class="app-window">
 
-    <main>
-
-      <!-- ── Inputs ── -->
-      <section class="card input-card">
-        <div class="input-group">
-          <label for="numA">Minuendo <span class="label-hint">(A)</span></label>
-          <input
-            type="text"
-            id="numA"
-            placeholder="ej. 1101"
-            maxlength="16"
-            autocomplete="off"
-            inputmode="numeric"
-          >
-          <span class="field-hint" id="hintA"></span>
-        </div>
-
-        <div class="operator-row">
-          <span class="operator-symbol">−</span>
-        </div>
-
-        <div class="input-group">
-          <label for="numB">Sustraendo <span class="label-hint">(B)</span></label>
-          <input
-            type="text"
-            id="numB"
-            placeholder="ej. 0110"
-            maxlength="16"
-            autocomplete="off"
-            inputmode="numeric"
-          >
-          <span class="field-hint" id="hintB"></span>
-        </div>
-
-        <button id="calcBtn" class="btn-primary">
-          <span>Calcular resta</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-      </section>
-
-      <!-- ── Error ── -->
-      <div id="errorBox" class="error-box hidden" role="alert">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="errorMsg"></span>
+    <!-- Barra de título estilo macOS -->
+    <div class="window-bar">
+      <div class="traffic-lights">
+        <span class="tl tl-red"    aria-hidden="true"></span>
+        <span class="tl tl-yellow" aria-hidden="true"></span>
+        <span class="tl tl-green"  aria-hidden="true"></span>
       </div>
+      <span class="window-title">calculadora-binaria</span>
+    </div>
 
-      <!-- ── Resultado ── -->
-      <section id="resultCard" class="card result-card hidden">
-        <div class="result-label">Resultado  A − B</div>
-        <div class="result-main">
-          <span id="resultSign" class="result-sign"></span>
-          <span id="resultBin" class="result-bin"></span>
-          <span id="resultBadge" class="result-badge"></span>
-        </div>
-        <div id="resultDecimal" class="result-decimal"></div>
-      </section>
+    <!-- Contenido de la ventana -->
+    <div class="container">
 
-      <!-- ── Procedimiento ── -->
-      <section id="stepsCard" class="card steps-card hidden">
-        <h2>Procedimiento paso a paso</h2>
-        <p class="steps-intro">Se usa la resta binaria con <strong>préstamo</strong>, igual que en decimal pero en base 2.</p>
+      <!-- ── Tabs principales ── -->
+      <nav class="main-tabs" role="tablist">
+        <button class="main-tab active" data-panel="converterPanel" role="tab" aria-selected="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+          Conversor
+        </button>
+        <button class="main-tab" data-panel="calculatorPanel" role="tab" aria-selected="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="11" y2="14"/></svg>
+          Resta Binaria
+        </button>
+      </nav>
 
-        <div id="negativeNote" class="note-box hidden">
-          <strong>Resultado negativo:</strong> El minuendo A es menor que el sustraendo B,
-          por lo que A &minus; B es negativo. Se calcula &nbsp;<strong>|B &minus; A|</strong>&nbsp;
-          y se antepone el signo &minus;.
-        </div>
+      <!-- ══════════ PANEL: CONVERSOR ══════════ -->
+      <div id="converterPanel" class="mode-panel active">
 
-        <!-- tabla visual -->
-        <div id="tableWrap" class="table-wrap"></div>
+        <section class="card converter-card">
 
-        <!-- lista de pasos -->
-        <div id="stepList" class="step-list"></div>
-      </section>
+          <!-- Sub-tabs de modo -->
+          <div class="conv-sub-tabs" role="tablist">
+            <button class="conv-tab active" data-conv="bin2dec" role="tab">
+              <span class="tag-mono">Bin</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              Decimal
+            </button>
+            <button class="conv-tab" data-conv="dec2bin" role="tab">
+              <span class="tag-mono">Dec</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              Binario
+            </button>
+          </div>
 
-      <!-- ── Explicación teórica ── -->
-      <section class="card theory-card">
-        <h2>¿Cómo funciona la lógica?</h2>
-        <div class="theory-body">
-
-          <div class="theory-block">
-            <h3>Reglas básicas</h3>
-            <div class="rules-grid">
-              <div class="rule-item"><code>0 − 0 = 0</code></div>
-              <div class="rule-item"><code>1 − 0 = 1</code></div>
-              <div class="rule-item"><code>1 − 1 = 0</code></div>
-              <div class="rule-item rule-borrow"><code>0 − 1</code> → <strong>préstamo</strong><br><code>10₂ − 1 = 1</code></div>
+          <!-- ── Modo Binario → Decimal ── -->
+          <div id="bin2decMode" class="conv-mode active">
+            <div class="conv-input-group">
+              <label for="binConvInput">
+                Número binario
+                <span class="badge-base">base 2</span>
+              </label>
+              <input
+                type="text"
+                id="binConvInput"
+                class="conv-input"
+                placeholder="ej. 1010"
+                maxlength="32"
+                autocomplete="off"
+                inputmode="numeric"
+                spellcheck="false"
+              >
+              <span class="conv-hint" id="binConvHint"></span>
+            </div>
+            <div class="conv-result-box" id="bin2decResult" aria-live="polite">
+              <span class="conv-placeholder">Escribe un número binario para convertir</span>
             </div>
           </div>
 
-          <div class="theory-block">
-            <h3>Algoritmo con préstamo</h3>
-            <ol class="theory-steps">
-              <li>Alinea los bits de derecha a izquierda (del menos al más significativo).</li>
-              <li>Resta columna a columna. Si el bit superior es menor, <em>pide préstamo</em> a la columna de la izquierda.</li>
-              <li>Pedir préstamo equivale a sumar 2 al bit actual y restar 1 al bit de la izquierda.</li>
-              <li>El resultado se lee de izquierda a derecha.</li>
-            </ol>
+          <!-- ── Modo Decimal → Binario ── -->
+          <div id="dec2binMode" class="conv-mode">
+            <div class="conv-input-group">
+              <label for="decConvInput">
+                Número decimal
+                <span class="badge-base">base 10</span>
+              </label>
+              <input
+                type="text"
+                id="decConvInput"
+                class="conv-input"
+                placeholder="ej. 10"
+                maxlength="15"
+                autocomplete="off"
+                inputmode="numeric"
+                spellcheck="false"
+              >
+              <span class="conv-hint" id="decConvHint"></span>
+            </div>
+            <div class="conv-result-box" id="dec2binResult" aria-live="polite">
+              <span class="conv-placeholder">Escribe un número decimal para convertir</span>
+            </div>
           </div>
 
-          <div class="theory-block">
-            <h3>Casos negativos</h3>
-            <p>Esta calculadora compara los valores decimales de A y B. Si A &lt; B, el resultado es negativo. Se muestra el signo <strong>−</strong> y el procedimiento usa |B − A| para ilustrar la mecánica del préstamo de forma clara. <em>No se usa complemento a 2</em> para mostrar el procedimiento, pero sí se indica cuándo el resultado es negativo.</p>
+        </section>
+
+      </div><!-- /converterPanel -->
+
+      <!-- ══════════ PANEL: CALCULADORA ══════════ -->
+      <div id="calculatorPanel" class="mode-panel">
+
+        <!-- ── Inputs ── -->
+        <section class="card input-card">
+          <div class="input-group">
+            <label for="numA">Minuendo <span class="label-hint">(A)</span></label>
+            <input
+              type="text"
+              id="numA"
+              placeholder="ej. 1101"
+              maxlength="16"
+              autocomplete="off"
+              inputmode="numeric"
+            >
+            <span class="field-hint" id="hintA"></span>
+            <span class="decimal-hint" id="decimalA">Decimal: —</span>
           </div>
 
+          <div class="operator-row">
+            <span class="operator-symbol">−</span>
+          </div>
+
+          <div class="input-group">
+            <label for="numB">Sustraendo <span class="label-hint">(B)</span></label>
+            <input
+              type="text"
+              id="numB"
+              placeholder="ej. 0110"
+              maxlength="16"
+              autocomplete="off"
+              inputmode="numeric"
+            >
+            <span class="field-hint" id="hintB"></span>
+            <span class="decimal-hint" id="decimalB">Decimal: —</span>
+          </div>
+
+          <button id="calcBtn" class="btn-primary">
+            <span>Calcular resta</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </section>
+
+        <!-- ── Error ── -->
+        <div id="errorBox" class="error-box hidden" role="alert">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="errorMsg"></span>
         </div>
-      </section>
 
-    </main>
+        <!-- ── Resultado ── -->
+        <section id="resultCard" class="card result-card hidden">
+          <div class="result-label">Resultado  A − B</div>
+          <div class="result-main">
+            <span id="resultSign" class="result-sign"></span>
+            <span id="resultBin" class="result-bin"></span>
+            <span id="resultBadge" class="result-badge"></span>
+          </div>
+          <div id="resultDecimal" class="result-decimal"></div>
+          <div id="resultDecimalVal" class="result-decimal-val"></div>
+        </section>
 
-    <footer>
-      <p>Solo 0s y 1s &mdash; Resta binaria con préstamo</p>
-    </footer>
+        <!-- ── Procedimiento ── -->
+        <section id="stepsCard" class="card steps-card hidden">
+          <h2>Procedimiento paso a paso</h2>
+          <p class="steps-intro">Se usa la resta binaria con <strong>préstamo</strong>, igual que en decimal pero en base 2.</p>
 
-  </div>
+          <div id="negativeNote" class="note-box hidden">
+            <strong>Resultado negativo:</strong> El minuendo A es menor que el sustraendo B,
+            por lo que A &minus; B es negativo. Se calcula &nbsp;<strong>|B &minus; A|</strong>&nbsp;
+            y se antepone el signo &minus;.
+          </div>
+
+          <div id="tableWrap" class="table-wrap"></div>
+          <div id="stepList" class="step-list"></div>
+        </section>
+
+        <!-- ── Teoría ── -->
+        <section class="card theory-card">
+          <h2>¿Cómo funciona la lógica?</h2>
+          <div class="theory-body">
+
+            <div class="theory-block">
+              <h3>Reglas básicas</h3>
+              <div class="rules-grid">
+                <div class="rule-item"><code>0 − 0 = 0</code></div>
+                <div class="rule-item"><code>1 − 0 = 1</code></div>
+                <div class="rule-item"><code>1 − 1 = 0</code></div>
+                <div class="rule-item rule-borrow"><code>0 − 1</code> → <strong>préstamo</strong><br><code>10₂ − 1 = 1</code></div>
+              </div>
+            </div>
+
+            <div class="theory-block">
+              <h3>Algoritmo con préstamo</h3>
+              <ol class="theory-steps">
+                <li>Alinea los bits de derecha a izquierda (del menos al más significativo).</li>
+                <li>Resta columna a columna. Si el bit superior es menor, <em>pide préstamo</em> a la columna de la izquierda.</li>
+                <li>Pedir préstamo equivale a sumar 2 al bit actual y restar 1 al bit de la izquierda.</li>
+                <li>El resultado se lee de izquierda a derecha.</li>
+              </ol>
+            </div>
+
+            <div class="theory-block">
+              <h3>Casos negativos</h3>
+              <p>Esta calculadora compara los valores decimales de A y B. Si A &lt; B, el resultado es negativo. Se muestra el signo <strong>−</strong> y el procedimiento usa |B − A| para ilustrar la mecánica del préstamo de forma clara. <em>No se usa complemento a 2</em> para mostrar el procedimiento, pero sí se indica cuándo el resultado es negativo.</p>
+            </div>
+
+          </div>
+        </section>
+
+      </div><!-- /calculatorPanel -->
+
+    </div><!-- /container -->
+  </div><!-- /app-window -->
+
+  <footer>
+    <p>Solo 0s y 1s &mdash; Binario con préstamo</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
